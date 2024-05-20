@@ -5,7 +5,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
-//import androidx.compose.foundation.lazy.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.items
@@ -21,11 +20,12 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 
 @Composable
-fun HomeScreen() {
+fun HomeScreen(navController: NavController) {
     Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
-        TopBar()
+        TopBar(navController)
         Spacer(modifier = Modifier.height(16.dp))
         CategorySection()
         Spacer(modifier = Modifier.height(16.dp))
@@ -35,12 +35,12 @@ fun HomeScreen() {
             fontWeight = FontWeight.Bold
         )
         Spacer(modifier = Modifier.height(16.dp))
-        RecipeList()
+        RecipeList(navController)
     }
 }
 
 @Composable
-fun TopBar() {
+fun TopBar(navController: NavController) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -56,13 +56,25 @@ fun TopBar() {
                 color = Color.Black
             )
         }
-        Icon(
-            painter = painterResource(id = R.drawable.ic_profile),
-            contentDescription = "Profile",
-            modifier = Modifier
-                .size(40.dp)
-                .clickable { /* Handle profile click */ }
-        )
+        Row(
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                painter = painterResource(id = R.drawable.ic_favorite), // Replace with your favorite icon resource
+                contentDescription = "Favorite",
+                modifier = Modifier
+                    .size(40.dp)
+                    .clickable { /* Handle favorite click */ }
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Icon(
+                painter = painterResource(id = R.drawable.ic_profile),
+                contentDescription = "Profile",
+                modifier = Modifier
+                    .size(40.dp)
+                    .clickable { navController.navigate("profile") }
+            )
+        }
     }
     Spacer(modifier = Modifier.height(16.dp))
     Row(
@@ -99,6 +111,7 @@ fun TopBar() {
         )
     }
 }
+
 
 @Composable
 fun CategorySection() {
@@ -143,7 +156,7 @@ fun CategorySection() {
 }
 
 @Composable
-fun RecipeList() {
+fun RecipeList(navController: NavController) {
     LazyVerticalGrid(
         columns = GridCells.Fixed(2),
         contentPadding = PaddingValues(horizontal = 8.dp),
@@ -151,19 +164,19 @@ fun RecipeList() {
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         items(20) { index ->
-            RecipeItem(recipeName = "Recipe $index")
+            RecipeItem(navController, recipeName = "Recipe $index")
         }
     }
 }
 
 @Composable
-fun RecipeItem(recipeName: String) {
+fun RecipeItem(navController: NavController, recipeName: String) {
     Card(
-        modifier = Modifier.clickable { /* Recipe Item */ }
+        modifier = Modifier
+            .clickable { navController.navigate("recipe") }
             .fillMaxWidth()
             .height(200.dp)
-            .clip(RoundedCornerShape(16.dp)),
-        //elevation = 4.dp
+            .clip(RoundedCornerShape(16.dp))
     ) {
         Column {
             Image(
@@ -172,20 +185,17 @@ fun RecipeItem(recipeName: String) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(120.dp)
-                //contentScale = ContentScale.Crop
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = recipeName,
                 modifier = Modifier.padding(horizontal = 8.dp),
-                //style = MaterialTheme.typography.body1,
                 fontWeight = FontWeight.Bold
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
                 text = "4.5 ★",
                 modifier = Modifier.padding(horizontal = 8.dp),
-                //style = MaterialTheme.typography.body2,
                 color = Color.Gray
             )
         }
