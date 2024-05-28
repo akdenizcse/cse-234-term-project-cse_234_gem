@@ -51,6 +51,27 @@ android {
 
 dependencies {
 
+    implementation(libs.androidx.runtime.livedata)
+    val composeVersion = "1.6.7"
+
+    implementation(libs.androidx.core.ktx)
+    implementation("androidx.appcompat:appcompat:1.6.1")
+    implementation("com.google.android.material:material:1.12.0")
+    implementation("androidx.compose.ui:ui:$composeVersion")
+    implementation("androidx.activity:activity-compose:1.9.0")
+    implementation("androidx.compose.material:material:$composeVersion")
+    implementation("androidx.compose.ui:ui-tooling-preview:$composeVersion")
+    implementation("androidx.compose.material:material-icons-extended:$composeVersion")
+    implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.0")
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.0")
+
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.0")
+
+    implementation(platform("com.google.firebase:firebase-bom:33.0.0"))
+
+    implementation("com.google.firebase:firebase-auth-ktx")
+
+    implementation("com.google.accompanist:accompanist-insets:0.23.1")
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)

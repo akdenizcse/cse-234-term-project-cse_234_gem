@@ -33,7 +33,8 @@ class MainActivity : ComponentActivity() {
                             RecipePage(navController)
                         }
                         composable("profile") {
-                            ProfilePage(navController)
+                            val userViewModel = UserViewModel()
+                            ProfilePage(navController, userViewModel)
                         }
                     }
                 }
