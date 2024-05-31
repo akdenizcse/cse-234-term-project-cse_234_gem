@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "950419525726",
+    "project_id": "recipefinder-gem",
+    "storage_bucket": "recipefinder-gem.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:950419525726:android:fb49f9b6e96766ab6364cf",
+        "android_client_info": {
+          "package_name": "com.example.recipefinder"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAq66-NJbd9uYNCzFE1pjYgRfhSfJksYB0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,5 +1,4 @@
-package com.example.recipefinder
-
+import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.slideInHorizontally
@@ -7,37 +6,79 @@ import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.material3.Button
-import androidx.compose.material3.Divider
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import com.example.recipefinder.ui.theme.LogInPage.LoginUIEvent
-import com.example.recipefinder.ui.theme.LogInPage.LoginViewModel
-import com.example.recipefinder.ui.theme.SignUpPage.SignupUIEvent
-import com.example.recipefinder.ui.theme.SignUpPage.SignupViewModel
+import com.example.recipefinder.R
 import com.example.recipefinder.ui.theme.MyTextField
 import com.example.recipefinder.ui.theme.PasswordTextField
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun LoginPage(navController: NavController) {
     var isSignUp by remember { mutableStateOf(false) }
-    var loginViewModel= LoginViewModel()
-    var signupViewModel= SignupViewModel()
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var verifyPassword by remember { mutableStateOf("") }
     var name by remember { mutableStateOf("") }
     var surname by remember { mutableStateOf("") }
     var phoneNumber by remember { mutableStateOf("") }
-    var verifyPassword by remember { mutableStateOf("") }
+    val context = LocalContext.current
+    val auth = remember { FirebaseAuth.getInstance() }
+    val firestore = remember { FirebaseFirestore.getInstance() }
+
+    fun handleLogin() {
+        auth.signInWithEmailAndPassword(email, password)
+            .addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    navController.navigate("home")
+                } else {
+                    Toast.makeText(context, "Login failed: ${task.exception?.message}", Toast.LENGTH_LONG).show()
+                }
+            }
+    }
+
+    fun handleSignUp() {
+        if (password != verifyPassword) {
+            Toast.makeText(context, "Passwords do not match", Toast.LENGTH_LONG).show()
+            return
+        }
+
+        auth.createUserWithEmailAndPassword(email, password)
+            .addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    val user = auth.currentUser
+                    val userProfile = hashMapOf(
+                        "ID" to user?.uid,
+                        "name" to name,
+                        "surname" to surname,
+                        "email" to email,
+                        "phone" to phoneNumber,
+                        "password" to password // Storing plain text passwords is not recommended.
+                    )
+
+                    firestore.collection("User").document(user?.uid ?: "")
+                        .set(userProfile)
+                        .addOnSuccessListener {
+                            navController.navigate("home")
+                        }
+                        .addOnFailureListener { e ->
+                            Toast.makeText(context, "Profile update failed: ${e.message}", Toast.LENGTH_LONG).show()
+                        }
+                } else {
+                    Toast.makeText(context, "Sign-up failed: ${task.exception?.message}", Toast.LENGTH_LONG).show()
+                }
+            }
+    }
 
     Column(
         modifier = Modifier
@@ -48,7 +89,7 @@ fun LoginPage(navController: NavController) {
     ) {
         Image(
             painter = painterResource(id = R.drawable.logo),
-            null,
+            contentDescription = null,
             Modifier.size(200.dp),
         )
         Text(
@@ -62,55 +103,38 @@ fun LoginPage(navController: NavController) {
             enter = slideInHorizontally(initialOffsetX = { it / 2 }),
             exit = slideOutHorizontally(targetOffsetX = { it / 2 })
         ) {
-            Column (modifier = Modifier
-                .padding(16.dp),
-
-                horizontalAlignment = Alignment.CenterHorizontally){
+            Column(
+                modifier = Modifier.padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
                 MyTextField(
                     labelValue = stringResource(id = R.string.first_name),
                     painterResource(id = R.drawable.profile),
-                    onTextChanged = {
-                        signupViewModel.onEvent(SignupUIEvent.FirstNameChanged(it))
-                    },
-                    errorStatus = signupViewModel.registrationUIState.value.firstNameError
+                    onTextChanged = { name = it }
                 )
                 MyTextField(
                     labelValue = stringResource(id = R.string.last_name),
                     painterResource = painterResource(id = R.drawable.profile),
-                    onTextChanged = {
-                        signupViewModel.onEvent(SignupUIEvent.LastNameChanged(it))
-                    },
-                    errorStatus = signupViewModel.registrationUIState.value.lastNameError
+                    onTextChanged = { surname = it }
                 )
-                //PHONE
                 MyTextField(
                     labelValue = stringResource(id = R.string.phone_number),
                     painterResource = painterResource(id = R.drawable.phone),
-                    onTextChanged = {
-                       signupViewModel.onEvent(SignupUIEvent.LastNameChanged(it))
-                    },
-                    errorStatus = signupViewModel.registrationUIState.value.phoneNumberError
+                    onTextChanged = { phoneNumber = it }
                 )
-
             }
         }
+
         MyTextField(
             labelValue = stringResource(id = R.string.email),
             painterResource(id = R.drawable.email),
-            onTextChanged = {
-                loginViewModel.onEvent(LoginUIEvent.EmailChanged(it))
-            },
-            errorStatus = loginViewModel.loginUIState.value.emailError
+            onTextChanged = { email = it }
         )
 
         PasswordTextField(
             labelValue = stringResource(id = R.string.password),
             painterResource(id = R.drawable.baseline_lock_24),
-            onTextSelected = {
-
-                loginViewModel.onEvent(LoginUIEvent.PasswordChanged(it))
-            },
-            errorStatus = loginViewModel.loginUIState.value.passwordError
+            onTextSelected = { password = it }
         )
 
         AnimatedVisibility(
@@ -118,31 +142,19 @@ fun LoginPage(navController: NavController) {
             enter = slideInHorizontally(initialOffsetX = { it / 2 }),
             exit = slideOutHorizontally(targetOffsetX = { it / 2 })
         ) {
-           /* PasswordTextField(
+            PasswordTextField(
                 labelValue = stringResource(id = R.string.verify_password),
                 painterResource(id = R.drawable.baseline_lock_24),
-                onTextSelected = {
-
-                    loginViewModel.onEvent(LoginUIEvent.PasswordChanged(it))
-                },
-                errorStatus = loginViewModel.loginUIState.value.passwordError
-            )*/
+                onTextSelected = { verifyPassword = it }
+            )
         }
-       /* ButtonComponent(
-            value = stringResource(id = R.string.register),
-            onButtonClicked = {
-                signupViewModel.onEvent(SignupUIEvent.RegisterButtonClicked)
-            },
-            isEnabled = signupViewModel.allValidationsPassed.value
-        )*/
 
         Button(
             onClick = {
                 if (isSignUp) {
-                    // Handle sign-up logic
+                    handleSignUp()
                 } else {
-                    // Handle login logic
-                    navController.navigate("home")
+                    handleLogin()
                 }
             },
             modifier = Modifier
