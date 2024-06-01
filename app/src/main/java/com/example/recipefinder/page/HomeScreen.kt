@@ -1,4 +1,4 @@
-package com.example.recipefinder
+package com.example.recipefinder.page
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -12,6 +12,10 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -21,9 +25,20 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.example.recipefinder.R
+import com.example.recipefinder.api.Meal
+import com.example.recipefinder.makeRequest
 
 @Composable
 fun HomeScreen(navController: NavController) {
+    var meals by remember { mutableStateOf<List<Meal>>(emptyList()) }
+
+    makeRequest("") { receivedMeals ->
+        receivedMeals?.let {
+            meals = it
+        }
+    }
+
     Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
         TopBar(navController)
         Spacer(modifier = Modifier.height(16.dp))
@@ -35,7 +50,7 @@ fun HomeScreen(navController: NavController) {
             fontWeight = FontWeight.Bold
         )
         Spacer(modifier = Modifier.height(16.dp))
-        RecipeList(navController)
+        RecipeList(navController, meals)
     }
 }
 
@@ -156,24 +171,25 @@ fun CategorySection() {
 }
 
 @Composable
-fun RecipeList(navController: NavController) {
+fun RecipeList(navController: NavController, meals: List<Meal>) {
     LazyVerticalGrid(
         columns = GridCells.Fixed(2),
         contentPadding = PaddingValues(horizontal = 8.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        items(20) { index ->
-            RecipeItem(navController, recipeName = "Recipe $index")
+        items(meals.size) { meal ->
+            val current_meal : Meal = meals[meal]
+            RecipeItem(navController, current_meal)
         }
     }
 }
 
 @Composable
-fun RecipeItem(navController: NavController, recipeName: String) {
+fun RecipeItem(navController: NavController, meal: Meal) {
     Card(
         modifier = Modifier
-            .clickable { navController.navigate("recipe") }
+            .clickable { navController.navigate("recipe/${meal.idMeal}") }
             .fillMaxWidth()
             .height(200.dp)
             .clip(RoundedCornerShape(16.dp))
@@ -181,23 +197,34 @@ fun RecipeItem(navController: NavController, recipeName: String) {
         Column {
             Image(
                 painter = painterResource(id = R.drawable.ic_launcher_foreground), // replace with actual image resource
-                contentDescription = recipeName,
+                contentDescription = meal.strMeal,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(120.dp)
+                    .clip(shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp))
             )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = recipeName,
-                modifier = Modifier.padding(horizontal = 8.dp),
-                fontWeight = FontWeight.Bold
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = "4.5 ★",
-                modifier = Modifier.padding(horizontal = 8.dp),
-                color = Color.Gray
-            )
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
+            ) {
+                Text(
+                    text = meal.strMeal.toString(),
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 18.sp
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = "4.5 ★",
+                        color = Color.Gray
+                    )
+                }
+            }
         }
     }
 }

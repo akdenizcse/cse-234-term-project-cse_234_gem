@@ -1,4 +1,4 @@
-package com.example.recipefinder
+package com.example.recipefinder.page
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
@@ -17,6 +17,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.example.recipefinder.R
 
 @Composable
 fun RecipePage(navController: NavController) {
