@@ -56,7 +56,7 @@ dependencies {
 
     implementation(libs.androidx.runtime.livedata)
     val composeVersion = "1.6.7"
-
+    implementation("io.coil-kt:coil-compose:2.0.0")
     implementation(libs.androidx.core.ktx)
     implementation("androidx.appcompat:appcompat:1.6.1")
     implementation("com.google.android.material:material:1.12.0")

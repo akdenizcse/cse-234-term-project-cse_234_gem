@@ -27,10 +27,12 @@ import retrofit2.Callback
 import retrofit2.Response
 
 class MainActivity : ComponentActivity() {
+    companion object {
+        var staticMeal: Meal? = null
+    }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         FirebaseApp.initializeApp(this)
-        //makeRequest("")
         setContent {
             RecipeFinderTheme {
                 Surface(
@@ -45,12 +47,12 @@ class MainActivity : ComponentActivity() {
                         composable("home") {
                             HomeScreen(navController)
                         }
-                        composable("recipe") {
-                            RecipePage(navController)
-                        }
                         composable("profile") {
                             val userViewModel = UserViewModel()
                             ProfilePage(navController, userViewModel)
+                        }
+                        composable("recipe") {
+                            RecipePage(navController = navController, meal = staticMeal!!)
                         }
                     }
                 }
@@ -98,5 +100,4 @@ fun makeRequest(searchKey: String, callback: (List<Meal>?) -> Unit) {
         }
     })
 }
-
 

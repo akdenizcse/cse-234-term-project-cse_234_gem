@@ -65,4 +65,10 @@ data class Meal(
 interface IRetrofit {
     @GET("api/json/v1/1/search.php")
     fun getData(@Query("s") searchKey: String): Call<JsonObject>
+
+    @GET("/api/json/v1/1/filter.php")
+    fun getCategory(@Query("c") searchKey: String) : Call<JsonObject>
+
+    @GET("/api/json/v1/1/lookup.php")
+    fun getById(@Query("i") searchKey: String) : Call<JsonObject>
 }
