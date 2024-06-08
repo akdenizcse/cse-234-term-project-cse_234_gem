@@ -1,5 +1,6 @@
 package com.example.recipefinder.page
 
+import com.example.recipefinder.ui.theme.Navigation.UserViewModel
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -14,12 +15,10 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
 import androidx.navigation.NavController
 import com.example.recipefinder.R
-
+//import com.example.recipefinder.ui.theme.com.example.recipefinder.ui.theme.Navigation.UserViewModel
+import com.google.firebase.auth.FirebaseAuth
 
 @Composable
 fun ProfilePage(navController: NavController, userViewModel: UserViewModel) {
@@ -60,7 +59,6 @@ fun ProfileHeader(fullName: String) {
     )
 }
 
-
 @Composable
 fun UserInfo(phoneNumber: String, email: String) {
     Text(
@@ -71,6 +69,7 @@ fun UserInfo(phoneNumber: String, email: String) {
     Text(
         text = "Email : $email",
         fontSize = 16.sp,
+        color = Color.Black,
         modifier = Modifier.padding(8.dp)
     )
 }
@@ -93,7 +92,10 @@ fun ChangePasswordButton() {
 @Composable
 fun LogOutButton(navController: NavController) {
     Button(
-        onClick = { navController.navigate("login") },
+        onClick = {
+            FirebaseAuth.getInstance().signOut()
+            navController.navigate("login")
+        },
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp)
@@ -103,15 +105,3 @@ fun LogOutButton(navController: NavController) {
         Text(text = "Log Out")
     }
 }
-
-class UserViewModel : ViewModel() {
-    private val _fullName = MutableLiveData("Göktuğ Güngören") // Varsayılan bir isim, kayıt sayfasından alınacak.
-    val fullName: LiveData<String> = _fullName
-
-    private val _phoneNumber = MutableLiveData("0544 444 44 44")
-    val phoneNumber: LiveData<String> = _phoneNumber
-
-    private val _email = MutableLiveData("cookerg@gmail.com")
-    val email: LiveData<String> = _email
-}
-

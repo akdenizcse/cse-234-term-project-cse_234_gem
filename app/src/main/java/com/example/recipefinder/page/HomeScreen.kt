@@ -38,6 +38,8 @@ fun HomeScreen(navController: NavController) {
     var searchQuery by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf("") }
+    var isFavorite by remember { mutableStateOf(false) }
+
 
     val scope = rememberCoroutineScope()
 
@@ -115,16 +117,16 @@ fun TopBar(navController: NavController, searchQuery: String, onSearchQueryChang
                     contentDescription = "Favorite",
                     modifier = Modifier
                         .size(40.dp)
-                        .clickable { /* Handle favorite click */ }
+                        .clickable { navController.navigate("favorites") }
                 )
                 Spacer(modifier = Modifier.width(8.dp))
-                Icon(
+                /*Icon(
                     painter = painterResource(id = R.drawable.ic_profile),
                     contentDescription = "Profile",
                     modifier = Modifier
                         .size(40.dp)
                         .clickable { navController.navigate("profile") }
-                )
+                )*/
             }
         }
         Spacer(modifier = Modifier.height(16.dp))
@@ -275,6 +277,17 @@ fun RecipeItem(navController: NavController, meal: Meal,modifier: Modifier) {
                         text = "4.5 ★",
                         color = Color.Gray
                     )
+
+                    /*IconButton(
+                        onClick = { isFavorite = !isFavorite },
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.favorite_full_shape),
+                            contentDescription = "Favorite",
+                            tint = if (isFavorite) Color(0xFFFF4081) else Color.Gray,
+                            modifier = Modifier.size(50.dp)
+                        )
+                    }*/
                 }
             }
         }

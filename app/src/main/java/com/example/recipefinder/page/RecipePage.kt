@@ -15,6 +15,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -22,6 +23,7 @@ import androidx.navigation.NavController
 import coil.compose.rememberImagePainter
 import com.example.recipefinder.R
 import com.example.recipefinder.api.Meal
+import com.example.recipefinder.firebase.AuthHandler
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
@@ -30,9 +32,25 @@ import kotlinx.coroutines.tasks.await
 fun RecipePage(navController: NavController, meal: Meal) {
     var imageVisible by remember { mutableStateOf(true) }
     val scrollState = rememberScrollState()
+    var isFavorite by remember { mutableStateOf(false) }
+    val user = FirebaseAuth.getInstance().currentUser
+    val userId = user?.uid
+    val db = FirebaseFirestore.getInstance()
+    val firebaseManager = AuthHandler(LocalContext.current) // Create an instance of FirebaseManager
 
     LaunchedEffect(scrollState.value) {
         imageVisible = scrollState.value == 0
+    }
+    LaunchedEffect(userId) {
+        if (userId != null) {
+            val snapshot = db.collection("Favorites")
+                .whereEqualTo("userId", userId)
+                .whereEqualTo("mealId", meal.idMeal)
+                .get()
+                .await()
+
+            isFavorite = !snapshot.isEmpty
+        }
     }
 
     val orangeColor = Color(0xFFFF9800)
@@ -54,7 +72,7 @@ fun RecipePage(navController: NavController, meal: Meal) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
-                painter = painterResource(id = R.drawable.ic_back),
+                painter = painterResource(id = R.drawable.baseline_arrow_back_24),
                 contentDescription = "Back",
                 modifier = Modifier
                     .size(24.dp)
@@ -67,6 +85,43 @@ fun RecipePage(navController: NavController, meal: Meal) {
                 style = MaterialTheme.typography.headlineSmall.copy(fontSize = 24.sp),
                 color = Color.White
             )
+            Spacer(modifier = Modifier.width(140.dp))
+            IconButton(
+                onClick = { isFavorite = !isFavorite
+                    if (userId != null) {
+                        if (isFavorite) {
+                            meal.idMeal?.let {
+                                firebaseManager.addFavorite(
+                                    mealId = it,
+                                    userId = userId,
+                                    onSuccess = {},
+                                    onFailure = {}
+                                )
+                            }
+                        } else {
+                            meal.idMeal?.let {
+                                firebaseManager.removeFavorite(
+                                    mealId = it,
+                                    userId = userId,
+                                    onSuccess = {},
+                                    onFailure = {}
+                                )
+                            }
+                        }
+                    }
+                }
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.favorite_full_shape),
+                    contentDescription = "Favorite",
+                    tint = if (isFavorite) Color.Red else Color.White,
+                    modifier = Modifier.size(50.dp)
+                )
+            }
+            LaunchedEffect(key1 = isFavorite) {
+                // Favori butonunun durumunu hatırlamak için LaunchedEffect kullanılıyor
+                // isFavorite değişkeni değiştiğinde bu etkileşim tetiklenecek
+            }
         }
 
         if (imageVisible) {

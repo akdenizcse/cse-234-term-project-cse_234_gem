@@ -1,6 +1,6 @@
 package com.example.recipefinder.page
 
-import android.widget.Toast
+import com.example.recipefinder.ui.theme.Navigation.UserViewModel
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.slideInHorizontally
@@ -17,13 +17,12 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.recipefinder.R
 import com.example.recipefinder.firebase.AuthHandler
 import com.example.recipefinder.ui.theme.MyTextField
 import com.example.recipefinder.ui.theme.PasswordTextField
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FirebaseFirestore
 
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
@@ -37,6 +36,8 @@ fun LoginPage(navController: NavController) {
     var phoneNumber by remember { mutableStateOf("") }
     val context = LocalContext.current
     val authHandler = remember { AuthHandler(context) }
+    val viewModel: UserViewModel = viewModel()
+
 
     Column(
         modifier = Modifier
