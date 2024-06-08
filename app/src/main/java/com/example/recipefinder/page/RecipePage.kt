@@ -7,6 +7,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -36,7 +38,7 @@ fun RecipePage(navController: NavController, meal: Meal) {
     val user = FirebaseAuth.getInstance().currentUser
     val userId = user?.uid
     val db = FirebaseFirestore.getInstance()
-    val firebaseManager = AuthHandler(LocalContext.current) // Create an instance of FirebaseManager
+    val firebaseManager = AuthHandler(LocalContext.current)
 
     LaunchedEffect(scrollState.value) {
         imageVisible = scrollState.value == 0
@@ -53,7 +55,7 @@ fun RecipePage(navController: NavController, meal: Meal) {
         }
     }
 
-    val orangeColor = Color(0xFFFF9800)
+    val orangeColor = Color(0xFFFF8C00)
     val orangeGradient = Brush.verticalGradient(
         colors = listOf(orangeColor, orangeColor.copy(alpha = 0.7f))
     )
@@ -118,10 +120,6 @@ fun RecipePage(navController: NavController, meal: Meal) {
                     modifier = Modifier.size(50.dp)
                 )
             }
-            LaunchedEffect(key1 = isFavorite) {
-                // Favori butonunun durumunu hatırlamak için LaunchedEffect kullanılıyor
-                // isFavorite değişkeni değiştiğinde bu etkileşim tetiklenecek
-            }
         }
 
         if (imageVisible) {
@@ -147,7 +145,7 @@ fun RecipePage(navController: NavController, meal: Meal) {
             Text(
                 text = meal.strInstructions ?: "No instructions available.",
                 style = MaterialTheme.typography.bodyLarge,
-                color = Color.Gray
+                color = Color.Black
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -184,7 +182,7 @@ fun RecipePage(navController: NavController, meal: Meal) {
                     Text(
                         text = "$ingredient: $measure",
                         style = MaterialTheme.typography.bodyLarge,
-                        color = Color.Gray
+                        color = Color.Black
                     )
             }
 
@@ -218,65 +216,120 @@ fun CommentSection(mealId: String) {
     val userName = currentUser?.displayName ?: currentUser?.email ?: "Anonymous"
     val userId = currentUser?.uid ?: ""
 
-    Column {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color.LightGray.copy(alpha = 0.1f))
+            .padding(16.dp)
+            .clip(RoundedCornerShape(8.dp))
+    ) {
+        // Comment submission area
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 8.dp),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Text("Total Comments: ${comments.size}")
             Text("Average Rating: ${"%.1f".format(averageRating)}")
         }
 
-        comments.forEach { comment ->
-            Column(modifier = Modifier.padding(8.dp)) {
-                Text(text = "${comment.userName}: ${comment.text}")
-                Text(text = "Rating: ${comment.rating}")
-            }
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
         TextField(
             value = newCommentText,
             onValueChange = { newCommentText = it },
             label = { Text("Add a comment") },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 8.dp)
         )
 
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 8.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Slider(
-                value = newRating.toFloat(),
-                onValueChange = { newRating = it.toInt() },
-                valueRange = 0f..5f,
-                steps = 4
-            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.weight(1f)
+            ) {
+                for (i in 1..5) {
+                    Icon(
+                        imageVector = Icons.Filled.Star,
+                        contentDescription = null,
+                        tint = if (i <= newRating) Color(0xFFFFD700) else Color.Gray,
+                        modifier = Modifier
+                            .size(32.dp)
+                            .clickable { newRating = i }
+                            .padding(2.dp)
+                    )
+                }
+            }
             Text("Rating: $newRating")
         }
 
-        Button(onClick = {
-            val newComment = Comment(
-                id = "",
-                mealId = mealId,
-                text = newCommentText,
-                rating = newRating,
-                userId = userId,
-                userName = userName,
-                timestamp = System.currentTimeMillis()
-            )
+        Button(
+            onClick = {
+                val newComment = Comment(
+                    id = "",
+                    mealId = mealId,
+                    text = newCommentText,
+                    rating = newRating,
+                    userId = userId,
+                    userName = userName,
+                    timestamp = System.currentTimeMillis()
+                )
 
-            db.collection("Comments")
-                .add(newComment)
-                .addOnSuccessListener { documentReference ->
-                    comments = comments + newComment.copy(id = documentReference.id)
-                    newCommentText = ""
-                    newRating = 0
-                }
-        }) {
+                db.collection("Comments")
+                    .add(newComment)
+                    .addOnSuccessListener { documentReference ->
+                        comments = comments + newComment.copy(id = documentReference.id)
+                        newCommentText = ""
+                        newRating = 0
+                    }
+            },
+            modifier = Modifier.align(Alignment.End)
+        ) {
             Text("Submit")
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Existing comments
+        comments.forEach { comment ->
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 4.dp)
+                    .background(Color.White)
+                    .padding(8.dp)
+                    .clip(RoundedCornerShape(8.dp))
+            ) {
+                Text(
+                    text = comment.userName,
+                    style = MaterialTheme.typography.bodyLarge.copy(fontSize = 16.sp),
+                    color = Color.Black
+                )
+                Text(
+                    text = comment.text,
+                    style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp),
+                    color = Color.DarkGray
+                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(top = 4.dp)
+                ) {
+                    repeat(comment.rating) {
+                        Icon(
+                            imageVector = Icons.Filled.Star,
+                            contentDescription = null,
+                            tint = Color(0xFFFFD700), // Darker yellow
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
+                }
+            }
         }
     }
 }

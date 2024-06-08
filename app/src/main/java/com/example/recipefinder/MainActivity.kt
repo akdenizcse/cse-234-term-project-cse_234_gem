@@ -72,8 +72,12 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-fun makeRequest(searchKey: String, callback: (List<Meal>?) -> Unit) {
-    val call: Call<JsonObject> = RetrofitClient.instance.getData(searchKey)
+fun makeRequest(
+    searchKey: String,
+    apiCall: (String) -> Call<JsonObject>,
+    callback: (List<Meal>?) -> Unit
+) {
+    val call: Call<JsonObject> = apiCall(searchKey)
 
     call.enqueue(object : Callback<JsonObject> {
         override fun onResponse(call: Call<JsonObject>, response: Response<JsonObject>) {

@@ -2,6 +2,7 @@
 
 package com.example.recipefinder.page
 
+
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -27,7 +28,9 @@ import androidx.navigation.NavController
 import coil.compose.rememberImagePainter
 import com.example.recipefinder.MainActivity
 import com.example.recipefinder.R
+import com.example.recipefinder.api.IRetrofit
 import com.example.recipefinder.api.Meal
+import com.example.recipefinder.api.RetrofitClient
 import com.example.recipefinder.makeRequest
 import kotlinx.coroutines.launch
 
@@ -48,7 +51,7 @@ fun HomeScreen(navController: NavController) {
             isLoading = true
             errorMessage = ""
             try {
-                makeRequest(searchQuery) { receivedMeals ->
+                makeRequest(searchQuery, RetrofitClient.instance::getData) { receivedMeals ->
                     receivedMeals?.let {
                         meals = it
                     }
