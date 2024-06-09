@@ -9,28 +9,39 @@ At Recipe Finder, our mission is to provide users with a seamless and delightful
 ## Features
 
 ### Homepage
+<img src="./GithubResources/Home.jpeg" alt="Home" width="300"/>
 - Discover trending and popular recipes.
 - Search for recipes by name, ingredient, or category.
 - Filter recipes based on dietary preferences and cooking time.
 
 ### Authentication
+<img src="./GithubResources/Login.jpeg" alt="Login" width="200"/> <img src="./GithubResources/Signup.jpeg" alt="Signup" width="200"/>
 - Securely sign up and log in to your account.
 - Safeguard your personal data with Firebase authentication.
 
 ### Favorites
+<img src="./GithubResources/Fav.jpeg" alt="Favorites" width="300"/>
 - Save your favorite recipes for quick access.
 - Organize your saved recipes into custom categories.
 
-### Profile
-- View and edit your user profile.
-- Track your activity and saved recipes.
-
 ### Ratings & Comments
+<img src="./GithubResources/Commet.jpeg" alt="Comments" width="300"/>
 - Rate and leave comments on recipes you've tried.
 - Share your cooking experiences and tips with the community.
 
 ### Category Selection
+<img src="./GithubResources/Category.jpeg" alt="Category" width="300"/>
 - Explore recipes by category, including cuisine type, dietary restrictions, and more.
+
+### Recipe Details
+<img src="./GithubResources/Recipe.jpeg" alt="Recipe" width="300"/>
+- View detailed information about each recipe.
+- Follow step-by-step cooking instructions.
+
+### Search
+<img src="./GithubResources/Search.jpeg" alt="Search" width="300"/>
+- Quickly find recipes by using the search feature.
+- Apply filters to narrow down search results.
 
 ## Other features
 
