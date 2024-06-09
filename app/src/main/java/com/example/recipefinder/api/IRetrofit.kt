@@ -71,4 +71,7 @@ interface IRetrofit {
 
     @GET("/api/json/v1/1/lookup.php")
     fun getById(@Query("i") searchKey: String) : Call<JsonObject>
+
+    @GET("/api/json/v1/1/categories.php")
+    fun getAllCategories(): Call<JsonObject>
 }

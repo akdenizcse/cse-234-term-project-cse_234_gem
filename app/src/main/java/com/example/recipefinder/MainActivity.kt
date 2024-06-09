@@ -83,32 +83,76 @@ fun makeRequest(
             if (response.isSuccessful) {
                 val responseBody: JsonObject? = response.body()
                 if (responseBody != null) {
-
-                    val meals: List<Meal> = jsonObjectToMeal(responseBody)
-
-
-                    meals.forEachIndexed { index, meal ->
-                        Log.d("MainActivity", "Meal ${index + 1}: $meal")
+                    if (responseBody.toString() == "{\"meals\":null}") {
+                        Log.e("MainActivity", "Meals are null")
+                        callback(emptyList()) // Return empty list if the meals are null
+                    } else {
+                        val meals: List<Meal> = jsonObjectToMeal(responseBody)
+                        meals.forEachIndexed { index, meal ->
+                            Log.d("MainActivity", "Meal ${index + 1}: $meal")
+                        }
+                        callback(meals)
                     }
-
-
-                    callback(meals)
                 } else {
                     Log.e("MainActivity", "Response body is null")
-
-                    callback(null)
+                    callback(emptyList()) // Return empty list if response body is null
                 }
             } else {
                 Log.e("MainActivity", "Error: ${response.message()}")
-
                 callback(null)
             }
         }
 
         override fun onFailure(call: Call<JsonObject>, t: Throwable) {
             Log.e("MainActivity", "Error: ${t.message}", t)
-
             callback(null)
         }
     })
 }
+
+
+
+data class Category(
+    val idCategory: String,
+    val strCategory: String?,
+    val strCategoryThumb: String?,
+    val strCategoryDescription: String?
+)
+
+fun fetchCategories(apiCall: () -> Call<JsonObject>, onSuccess: (List<Category>?) -> Unit, onFailure: () -> Unit) {
+    val call: Call<JsonObject> = apiCall()
+
+    call.enqueue(object : Callback<JsonObject> {
+        override fun onResponse(call: Call<JsonObject>, response: Response<JsonObject>) {
+            if (response.isSuccessful) {
+                val responseBody: JsonObject? = response.body()
+                if (responseBody != null && responseBody.has("categories")) {
+                    val categoriesJsonArray = responseBody.getAsJsonArray("categories")
+                    val categories = mutableListOf<Category>()
+
+                    categoriesJsonArray?.forEach { categoryJson ->
+                        val categoryObject = categoryJson.asJsonObject
+                        val id = categoryObject.get("idCategory").asString
+                        val name = categoryObject.get("strCategory").asString
+                        val thumbUrl = categoryObject.get("strCategoryThumb").asString
+                        val description = categoryObject.get("strCategoryDescription").asString
+
+                        val category = Category(id, name, thumbUrl, description)
+                        categories.add(category)
+                    }
+
+                    onSuccess(categories)
+                } else {
+                    onFailure()
+                }
+            } else {
+                onFailure()
+            }
+        }
+
+        override fun onFailure(call: Call<JsonObject>, t: Throwable) {
+            onFailure()
+        }
+    })
+}
+

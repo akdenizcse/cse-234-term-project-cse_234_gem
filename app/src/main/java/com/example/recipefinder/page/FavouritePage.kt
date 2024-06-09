@@ -46,6 +46,7 @@ import com.example.recipefinder.api.Meal
 import com.example.recipefinder.api.RetrofitClient
 import com.example.recipefinder.api.jsonObjectToMeal
 import com.example.recipefinder.firebase.AuthHandler
+import com.example.recipefinder.page.RecipeItem
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
@@ -131,113 +132,4 @@ fun FavouritePage(navController: NavController) {
     }
 }
 
-@Composable
-fun RecipeItem(
-    navController: NavController,
-    meal: Meal,
-    modifier: Modifier = Modifier
-) {
-    var isFavorite by remember { mutableStateOf(false) }
-    val user = FirebaseAuth.getInstance().currentUser
-    val userId = user?.uid
-    val db = FirebaseFirestore.getInstance()
-    val firebaseManager = AuthHandler(LocalContext.current)
-
-
-    LaunchedEffect(meal.idMeal, userId) {
-        if (userId != null && meal.idMeal != null) {
-            val favoriteRef = db.collection("Favorites")
-                .whereEqualTo("userId", userId)
-                .whereEqualTo("mealId", meal.idMeal)
-                .get()
-                .await()
-
-            isFavorite = !favoriteRef.isEmpty
-        }
-    }
-
-    Card(
-        modifier = Modifier
-            .clickable {
-                MainActivity.staticMeal = meal
-                navController.navigate("recipe")
-            }
-            .fillMaxWidth()
-            .height(200.dp)
-            .clip(RoundedCornerShape(16.dp))
-    ) {
-        Box(modifier = Modifier.fillMaxSize()) {
-            Column {
-                val painter = rememberImagePainter(data = meal.strMealThumb)
-
-                Image(
-                    painter = painter,
-                    contentDescription = null,
-                    modifier = modifier
-                        .fillMaxWidth()
-                        .height(140.dp),
-                    contentScale = ContentScale.Crop
-                )
-
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = 16.dp, vertical = 8.dp)
-                ) {
-                    Text(
-                        text = meal.strMeal.toString(),
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 18.sp
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(
-                            text = "4.5 ★",
-                            color = Color.Gray
-                        )
-                    }
-                }
-            }
-            IconButton(
-                onClick = {
-                    isFavorite = !isFavorite
-                    if (userId != null) {
-                        if (isFavorite) {
-                            meal.idMeal?.let {
-                                firebaseManager.addFavorite(
-                                    mealId = it,
-                                    userId = userId,
-                                    onSuccess = {},
-                                    onFailure = {}
-                                )
-                            }
-                        } else {
-                            meal.idMeal?.let {
-                                firebaseManager.removeFavorite(
-                                    mealId = it,
-                                    userId = userId,
-                                    onSuccess = {},
-                                    onFailure = {}
-                                )
-                            }
-                        }
-                    }
-                },
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(8.dp)
-                    .size(50.dp)
-            ) {
-                Icon(
-                    painter = painterResource(id = R.drawable.favorite_full_shape),
-                    contentDescription = "Favorite",
-                    tint = if (isFavorite) Color(0xFFFF4081) else Color.Gray
-                )
-            }
-        }
-    }
-}
 

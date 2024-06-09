@@ -22,15 +22,18 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import coil.compose.rememberImagePainter
+import com.example.recipefinder.Category
 import com.example.recipefinder.MainActivity
 import com.example.recipefinder.R
-import com.example.recipefinder.api.IRetrofit
 import com.example.recipefinder.api.Meal
 import com.example.recipefinder.api.RetrofitClient
+import com.example.recipefinder.fetchCategories
 import com.example.recipefinder.firebase.AuthHandler
 import com.example.recipefinder.makeRequest
 import com.google.firebase.auth.FirebaseAuth
@@ -40,14 +43,16 @@ import kotlinx.coroutines.tasks.await
 
 @Composable
 fun HomeScreen(navController: NavController) {
-    var modifier = Modifier
     var meals by remember { mutableStateOf<List<Meal>>(emptyList()) }
     var searchQuery by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf("") }
     val user = FirebaseAuth.getInstance().currentUser
     val scope = rememberCoroutineScope()
+    var categories by remember { mutableStateOf<List<Category>>(emptyList()) }
+    var selectedCategory by remember { mutableStateOf<Category?>(null) }
 
+    // Fetch recipes based on search query
     LaunchedEffect(searchQuery) {
         scope.launch {
             isLoading = true
@@ -66,6 +71,21 @@ fun HomeScreen(navController: NavController) {
         }
     }
 
+    // Fetch categories
+    LaunchedEffect(Unit) {
+        fetchCategories(
+            RetrofitClient.instance::getAllCategories,
+            onSuccess = { receivedCategories ->
+                receivedCategories?.let {
+                    categories = it
+                }
+            },
+            onFailure = {
+                // Handle failure, if needed
+            }
+        )
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -73,14 +93,43 @@ fun HomeScreen(navController: NavController) {
     ) {
         TopBar(navController, searchQuery, onSearchQueryChange = { searchQuery = it })
         Spacer(modifier = Modifier.height(16.dp))
-        CategorySection()
+
+        // Display categories
+        Column {
+            Text(
+                text = "Categories",
+                style = MaterialTheme.typography.bodySmall,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+            CategorySection(categories, selectedCategory,
+                onCategorySelected = { category ->
+                    selectedCategory = if (category == selectedCategory) null else category
+                },
+                onCategoryReset = { // Reset category selection
+                    selectedCategory = null
+                }
+            )
+        }
+
         Spacer(modifier = Modifier.height(16.dp))
+
+        // Display either category name or "Popular Recipes"
+        val displayText = if (selectedCategory != null) {
+            selectedCategory!!.strCategory ?: ""
+        } else {
+            "Popular Recipes"
+        }
         Text(
-            text = "Popular Recipes",
+            text = displayText,
             style = MaterialTheme.typography.bodyLarge,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(bottom = 8.dp)
         )
+
         Spacer(modifier = Modifier.height(16.dp))
+
+        // Display recipes
         if (isLoading) {
             CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
         } else if (errorMessage.isNotEmpty()) {
@@ -96,10 +145,20 @@ fun HomeScreen(navController: NavController) {
                 modifier = Modifier.align(Alignment.CenterHorizontally)
             )
         } else {
-            RecipeList(navController, meals, searchQuery, modifier)
+            val filteredMeals = if (selectedCategory != null) {
+                meals.filter { meal ->
+                    meal.strCategory == selectedCategory?.strCategory
+                }
+            } else {
+                meals
+            }
+            RecipeList(navController, filteredMeals, searchQuery, modifier = Modifier)
         }
     }
 }
+
+
+
 
 @Composable
 fun TopBar(navController: NavController, searchQuery: String, onSearchQueryChange: (String) -> Unit) {
@@ -165,64 +224,96 @@ fun TopBar(navController: NavController, searchQuery: String, onSearchQueryChang
     }
 }
 
-@Composable
-fun CategorySection() {
-    val categoryIcons = mapOf(
-        "Popular" to R.drawable.ic_popular,
-        "Beef" to R.drawable.ic_pizza,
-        "Chicken" to R.drawable.ic_coffee,
-        "Dessert" to R.drawable.ic_local,
-        "Miscellaneous" to R.drawable.ic_desserts,
-        "Pasta" to R.drawable.ic_local,
-        "Pork" to R.drawable.ic_local,
-        "Seafood" to R.drawable.ic_local,
-        "Side" to R.drawable.ic_local,
-        "Starter" to R.drawable.ic_local,
-        "Vegan" to R.drawable.ic_local,
-        "Vegetarian" to R.drawable.ic_local,
-        "Breakfast" to R.drawable.ic_local,
-        "Goat" to R.drawable.ic_local
-    )
 
+@Composable
+fun CategorySection(
+    categories: List<Category>,
+    selectedCategory: Category?,
+    onCategorySelected: (Category) -> Unit,
+    onCategoryReset: () -> Unit // Add this parameter for resetting category selection
+) {
     LazyRow(
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
     ) {
-        items(categoryIcons.keys.toList()) { category ->
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.clickable {
-                    /* Handle category click */
-                }
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(60.dp)
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.secondary),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        painter = painterResource(id = categoryIcons[category]!!),
-                        contentDescription = category,
-                        modifier = Modifier.size(30.dp),
-                        tint = Color.White
-                    )
-                }
-                Text(
-                    text = category,
-                    fontSize = 12.sp,
-                    color = Color.Gray
-                )
-            }
+        items(categories) { category ->
+            val isSelected = category == selectedCategory
+            CategoryItem(category, isSelected,
+                onClick = {
+                    if (!isSelected) {
+                        onCategorySelected(category)
+                    } else {
+                        onCategoryReset()
+                    }
+                },
+                onCategoryReset = onCategoryReset // Pass the onCategoryReset lambda
+            )
         }
     }
 }
+
+
+
+@Composable
+fun CategoryItem(
+    category: Category,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    onCategoryReset: () -> Unit // Add this parameter for resetting category selection
+) {
+    Card(
+        modifier = Modifier
+            .size(100.dp) // Adjust the size as needed
+            .clip(CircleShape)
+            .clickable {
+                if (isSelected) { // If category is already selected, reset selection
+                    onCategoryReset()
+                } else { // Otherwise, handle regular click
+                    onClick()
+                }
+            },
+        elevation = CardDefaults.cardElevation(
+            if (isSelected) 8.dp else 0.dp
+        ),
+        shape = CircleShape
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(8.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Image(
+                painter = rememberImagePainter(data = category.strCategoryThumb),
+                contentDescription = category.strCategory ?: "",
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .size(60.dp) // Adjust the size as needed
+                    .clip(CircleShape)
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = category.strCategory ?: "",
+                style = MaterialTheme.typography.bodyMedium,
+                textAlign = TextAlign.Center,
+                maxLines = 1, // Ensure text doesn't overflow
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+    }
+}
+
+
+
+
+
 
 @Composable
 fun RecipeList(navController: NavController, meals: List<Meal>, query: String, modifier: Modifier) {
     if (meals.isEmpty()) {
         Text(
-            text = "There is no recipe called \"$query\"",
+            text = "No recipe found for \"$query\"",
             modifier = Modifier.padding(16.dp)
         )
     } else {
@@ -239,6 +330,7 @@ fun RecipeList(navController: NavController, meals: List<Meal>, query: String, m
         }
     }
 }
+
 
 @Composable
 fun RecipeItem(navController: NavController, meal: Meal, modifier: Modifier = Modifier) {
@@ -285,7 +377,7 @@ fun RecipeItem(navController: NavController, meal: Meal, modifier: Modifier = Mo
                 navController.navigate("recipe")
             }
             .fillMaxWidth()
-            .height(200.dp)
+            .height(210.dp)
             .clip(RoundedCornerShape(16.dp))
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
