@@ -117,13 +117,13 @@ data class UserProfile(
                         "surname" to surname,
                         "email" to email,
                         "phone" to phoneNumber,
-                        "password" to password // Storing plain text passwords is not recommended.
+                        "password" to password
                     )
 
                     firestore.collection("User").document(user?.uid ?: "")
                         .set(userProfile)
                         .addOnSuccessListener {
-                           // UserViewModel.updateUserProfile("$name $surname", phoneNumber, email)
+
                             navController.navigate("home")
                         }
                         .addOnFailureListener { e ->

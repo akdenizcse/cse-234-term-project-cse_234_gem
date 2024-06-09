@@ -2,7 +2,6 @@
 
 package com.example.recipefinder.page
 
-
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -20,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -31,8 +31,12 @@ import com.example.recipefinder.R
 import com.example.recipefinder.api.IRetrofit
 import com.example.recipefinder.api.Meal
 import com.example.recipefinder.api.RetrofitClient
+import com.example.recipefinder.firebase.AuthHandler
 import com.example.recipefinder.makeRequest
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 
 @Composable
 fun HomeScreen(navController: NavController) {
@@ -41,9 +45,7 @@ fun HomeScreen(navController: NavController) {
     var searchQuery by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf("") }
-    var isFavorite by remember { mutableStateOf(false) }
-
-
+    val user = FirebaseAuth.getInstance().currentUser
     val scope = rememberCoroutineScope()
 
     LaunchedEffect(searchQuery) {
@@ -55,7 +57,6 @@ fun HomeScreen(navController: NavController) {
                     receivedMeals?.let {
                         meals = it
                     }
-
                 }
             } catch (e: Exception) {
                 errorMessage = "An error occurred while fetching recipes."
@@ -65,9 +66,11 @@ fun HomeScreen(navController: NavController) {
         }
     }
 
-    Column(modifier = Modifier
-        .fillMaxSize()
-        .padding(16.dp)) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+    ) {
         TopBar(navController, searchQuery, onSearchQueryChange = { searchQuery = it })
         Spacer(modifier = Modifier.height(16.dp))
         CategorySection()
@@ -93,7 +96,7 @@ fun HomeScreen(navController: NavController) {
                 modifier = Modifier.align(Alignment.CenterHorizontally)
             )
         } else {
-            RecipeList(navController, meals, searchQuery, modifier )
+            RecipeList(navController, meals, searchQuery, modifier)
         }
     }
 }
@@ -116,7 +119,7 @@ fun TopBar(navController: NavController, searchQuery: String, onSearchQueryChang
             )
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
-                    painter = painterResource(id = R.drawable.ic_favorite), // Replace with your favorite icon resource
+                    painter = painterResource(id = R.drawable.ic_favorite),
                     contentDescription = "Favorite",
                     modifier = Modifier
                         .size(40.dp)
@@ -188,7 +191,7 @@ fun CategorySection() {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier.clickable {
-                /* Handle category click */
+                    /* Handle category click */
                 }
             ) {
                 Box(
@@ -216,7 +219,7 @@ fun CategorySection() {
 }
 
 @Composable
-fun RecipeList(navController: NavController, meals: List<Meal>,query:String,modifier: Modifier) {
+fun RecipeList(navController: NavController, meals: List<Meal>, query: String, modifier: Modifier) {
     if (meals.isEmpty()) {
         Text(
             text = "There is no recipe called \"$query\"",
@@ -231,67 +234,130 @@ fun RecipeList(navController: NavController, meals: List<Meal>,query:String,modi
         ) {
             items(meals.size) { meal ->
                 val currentMeal: Meal = meals[meal]
-                RecipeItem(navController, currentMeal,modifier)
+                RecipeItem(navController, currentMeal, modifier)
             }
         }
     }
 }
 
 @Composable
-fun RecipeItem(navController: NavController, meal: Meal,modifier: Modifier) {
+fun RecipeItem(navController: NavController, meal: Meal, modifier: Modifier = Modifier) {
+
+    var isFavorite by remember { mutableStateOf(false) }
+    var averageRating by remember { mutableStateOf(0.0) }
+    val user = FirebaseAuth.getInstance().currentUser
+    val userId = user?.uid
+    val db = FirebaseFirestore.getInstance()
+    val firebaseManager = AuthHandler(LocalContext.current)
+
+
+    LaunchedEffect(meal.idMeal, userId) {
+        if (userId != null && meal.idMeal != null) {
+            val favoriteRef = db.collection("Favorites")
+                .whereEqualTo("userId", userId)
+                .whereEqualTo("mealId", meal.idMeal)
+                .get()
+                .await()
+
+            isFavorite = !favoriteRef.isEmpty
+        }
+    }
+
+
+    LaunchedEffect(meal.idMeal) {
+        if (meal.idMeal != null) {
+            val commentsRef = db.collection("Comments")
+                .whereEqualTo("mealId", meal.idMeal)
+                .get()
+                .await()
+
+            val ratings = commentsRef.documents.mapNotNull { it.getDouble("rating") }
+            if (ratings.isNotEmpty()) {
+                averageRating = ratings.average()
+            }
+        }
+    }
 
     Card(
         modifier = Modifier
             .clickable {
                 MainActivity.staticMeal = meal
-                navController.navigate("recipe") }
+                navController.navigate("recipe")
+            }
             .fillMaxWidth()
             .height(200.dp)
             .clip(RoundedCornerShape(16.dp))
     ) {
-        Column {
-            val painter = rememberImagePainter(data = meal.strMealThumb)
+        Box(modifier = Modifier.fillMaxSize()) {
+            Column {
+                val painter = rememberImagePainter(data = meal.strMealThumb)
 
-            Image(
-                painter = painter,
-                contentDescription = null,
-                modifier = modifier
-                    .fillMaxWidth()
-                    .height(140.dp), // Adjust the height as needed
-            contentScale = ContentScale.Crop
-            )
-
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 16.dp, vertical = 8.dp)
-            ) {
-                Text(
-                    text = meal.strMeal.toString(),
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 18.sp
+                Image(
+                    painter = painter,
+                    contentDescription = null,
+                    modifier = modifier
+                        .fillMaxWidth()
+                        .height(140.dp),
+                    contentScale = ContentScale.Crop
                 )
-                Spacer(modifier = Modifier.height(4.dp))
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        text = "4.5 ★",
-                        color = Color.Gray
-                    )
 
-                    /*IconButton(
-                        onClick = { isFavorite = !isFavorite },
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                ) {
+                    Text(
+                        text = meal.strMeal.toString(),
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.favorite_full_shape),
-                            contentDescription = "Favorite",
-                            tint = if (isFavorite) Color(0xFFFF4081) else Color.Gray,
-                            modifier = Modifier.size(50.dp)
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = String.format("%.1f ★", averageRating),
+                            color = Color.Gray
                         )
-                    }*/
+                    }
                 }
+            }
+            IconButton(
+                onClick = {
+                    isFavorite = !isFavorite
+                    if (userId != null) {
+                        if (isFavorite) {
+                            meal.idMeal?.let {
+                                firebaseManager.addFavorite(
+                                    mealId = it,
+                                    userId = userId,
+                                    onSuccess = {},
+                                    onFailure = {}
+                                )
+                            }
+                        } else {
+                            meal.idMeal?.let {
+                                firebaseManager.removeFavorite(
+                                    mealId = it,
+                                    userId = userId,
+                                    onSuccess = {},
+                                    onFailure = {}
+                                )
+                            }
+                        }
+                    }
+                },
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(8.dp)
+                    .size(50.dp)
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.favorite_full_shape),
+                    contentDescription = "Favorite",
+                    tint = if (isFavorite) Color(0xFFFF4081) else Color.Gray
+                )
             }
         }
     }

@@ -3,7 +3,7 @@ import androidx.lifecycle.ViewModelProvider
 import com.example.recipefinder.firebase.AuthHandler
 import com.example.recipefinder.ui.theme.Navigation.UserViewModel
 
-//import com.example.recipefinder.ui.theme.com.example.recipefinder.ui.theme.Navigation.UserViewModel
+
 
 
 class UserViewModelFactory(private val authHandler: AuthHandler) : ViewModelProvider.Factory {

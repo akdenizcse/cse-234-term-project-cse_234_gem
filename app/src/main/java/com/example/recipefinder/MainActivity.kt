@@ -18,7 +18,6 @@ import com.example.recipefinder.page.LoginPage
 import com.example.recipefinder.page.ProfilePage
 import com.example.recipefinder.page.RecipePage
 import com.example.recipefinder.ui.theme.RecipeFinderTheme
-//import com.example.recipefinder.ui.theme.com.example.recipefinder.ui.theme.Navigation.UserViewModel
 import com.example.recipefinder.ui.theme.Navigation.UserViewModel
 import com.google.firebase.FirebaseApp
 import android.util.Log
@@ -84,31 +83,31 @@ fun makeRequest(
             if (response.isSuccessful) {
                 val responseBody: JsonObject? = response.body()
                 if (responseBody != null) {
-                    // Convert JsonObject to List of Meals
+
                     val meals: List<Meal> = jsonObjectToMeal(responseBody)
 
-                    // Log each meal object
+
                     meals.forEachIndexed { index, meal ->
                         Log.d("MainActivity", "Meal ${index + 1}: $meal")
                     }
 
-                    // Call the callback with the list of meals
+
                     callback(meals)
                 } else {
                     Log.e("MainActivity", "Response body is null")
-                    // Call the callback with null indicating failure
+
                     callback(null)
                 }
             } else {
                 Log.e("MainActivity", "Error: ${response.message()}")
-                // Call the callback with null indicating failure
+
                 callback(null)
             }
         }
 
         override fun onFailure(call: Call<JsonObject>, t: Throwable) {
             Log.e("MainActivity", "Error: ${t.message}", t)
-            // Call the callback with null indicating failure
+
             callback(null)
         }
     })

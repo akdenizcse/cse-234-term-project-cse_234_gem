@@ -24,7 +24,7 @@ import com.example.recipefinder.firebase.AuthHandler
 import com.example.recipefinder.ui.theme.MyTextField
 import com.example.recipefinder.ui.theme.PasswordTextField
 
-@OptIn(ExperimentalAnimationApi::class)
+
 @Composable
 fun LoginPage(navController: NavController) {
     var isSignUp by remember { mutableStateOf(false) }
@@ -42,19 +42,19 @@ fun LoginPage(navController: NavController) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp),
+            .padding(12.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Image(
             painter = painterResource(id = R.drawable.logo),
             contentDescription = null,
-            Modifier.size(200.dp),
+            Modifier.size(180.dp),
         )
         Text(
             text = if (isSignUp) "Sign Up" else "Login",
             style = MaterialTheme.typography.headlineMedium,
-            modifier = Modifier.padding(bottom = 24.dp)
+            modifier = Modifier.padding(bottom = 16.dp)
         )
 
         AnimatedVisibility(
@@ -63,7 +63,7 @@ fun LoginPage(navController: NavController) {
             exit = slideOutHorizontally(targetOffsetX = { it / 2 })
         ) {
             Column(
-                modifier = Modifier.padding(16.dp),
+                modifier = Modifier.padding(12.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 MyTextField(
@@ -134,7 +134,7 @@ fun LoginPage(navController: NavController) {
         Divider(
             color = Color.Black.copy(alpha = 0.3f),
             thickness = 1.dp,
-            modifier = Modifier.padding(top = 28.dp)
+            modifier = Modifier.padding(top = 10.dp)
         )
 
         Text(
