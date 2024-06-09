@@ -51,3 +51,4 @@ At Recipe Finder, our mission is to provide users with a seamless and delightful
 - **Modularity:** Design the app with a modular architecture to enhance scalability and maintainability.
 - **Readability:** Write clean, well-documented code for easy understanding and collaboration.
 - **Memory Safety:** Ensure memory safety by following best practices and leveraging language features where applicable.
+
