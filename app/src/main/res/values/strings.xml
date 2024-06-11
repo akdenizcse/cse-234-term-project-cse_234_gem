@@ -1,0 +1,12 @@
+<resources>
+    <string name="app_name">RecipeFinder</string>
+    <string name="hide_password">Hide Password</string>
+    <string name="show_password">Show Password</string>
+    <string name="password">Password</string>
+    <string name="email">Email</string>
+    <string name="first_name">Name</string>
+    <string name="last_name">Surname</string>
+    <string name="phone_number">Phone Number</string>
+    <string name="verify_password">Verify Password</string>
+    <string name="register">Sign Up</string>
+</resources>
